@@ -1,0 +1,204 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum AttendanceStatus {
+  present    @map("present")
+  absent     @map("absent")
+  justified  @map("justified")
+}
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  users       User[]
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  status      Int      @default(1)
+
+  @@map("roles")
+}
+
+model User {
+  id                   Int                   @id @default(autoincrement())
+  id_number            String                @unique @map("id_number")
+  name                 String
+  last_name            String                @map("last_name")
+  birth_date           DateTime              @map("birth_date")
+  contact_phone        String?               @map("contact_phone")
+  photo_url            String?               @map("photo_url")
+  email                String?               @map("email")
+  comments             String?
+  role_id              Int                   @map("role_id")
+  role                 Role                  @relation(fields: [role_id], references: [id])
+
+  /// Relación con salas (catequizandos + representantes)
+  user_rooms           UserRoom[]
+  /// Catequistas -> salas
+  catechist_rooms      CatechistRoom[]
+  session_catechists   SessionCatechist[]
+
+  /// Registros de asistencia, evaluación y tareas
+  attendances          Attendance[]
+  assessments          Assessment[]
+  homework_assignments HomeworkAssignment[]
+
+  created_at           DateTime              @default(now())
+  updated_at           DateTime              @updatedAt
+  status               Int                   @default(1)
+
+  @@map("users")
+}
+
+model Level {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  rooms       Room[]
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  status      Int      @default(1)
+
+  @@map("levels")
+}
+
+model Location {
+  id          Int      @id @default(autoincrement())
+  name        String
+  rooms       Room[]
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  status      Int      @default(1)
+
+  @@map("locations")
+}
+
+model Room {
+  id               Int                @id @default(autoincrement())
+  level_id         Int                @map("level_id")
+  location_id      Int                @map("location_id")
+  year             Int
+  description      String?
+  level            Level              @relation(fields: [level_id], references: [id])
+  location         Location           @relation(fields: [location_id], references: [id])
+
+  /// Sala <- usuarios (catequizandos + representantes)
+  user_rooms       UserRoom[]
+
+  /// Sala <- catequistas
+  catechist_rooms  CatechistRoom[]
+  sessions         Session[]
+
+  created_at       DateTime           @default(now())
+  updated_at       DateTime           @updatedAt
+  status           Int                @default(1)
+
+  @@map("rooms")
+}
+
+/// Para asignar cualquier User <-> Room (catequizandos y representantes)
+model UserRoom {
+  user_id    Int      @map("user_id")
+  room_id    Int      @map("room_id")
+  user       User     @relation(fields: [user_id], references: [id])
+  room       Room     @relation(fields: [room_id], references: [id])
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  status     Int      @default(1)
+
+  @@id([user_id, room_id])
+  @@map("user_rooms")
+}
+
+/// Para asignar sólo catequistas a salas
+model CatechistRoom {
+  user_id    Int      @map("user_id")
+  room_id    Int      @map("room_id")
+  user       User     @relation(fields: [user_id], references: [id])
+  room       Room     @relation(fields: [room_id], references: [id])
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  status     Int      @default(1)
+
+  @@id([user_id, room_id])
+  @@map("catechist_rooms")
+}
+
+model Session {
+  id                  Int                  @id @default(autoincrement())
+  room_id             Int                  @map("room_id")
+  date_time           DateTime             @map("date_time")
+  topic               String
+  comments            String?
+  room                Room                 @relation(fields: [room_id], references: [id])
+  session_catechists  SessionCatechist[]
+  attendances         Attendance[]
+
+  created_at          DateTime             @default(now())
+  updated_at          DateTime             @updatedAt
+  status              Int                  @default(1)
+
+  @@map("sessions")
+}
+
+model SessionCatechist {
+  session_id Int     @map("session_id")
+  user_id    Int     @map("user_id")
+  session    Session @relation(fields: [session_id], references: [id])
+  user       User    @relation(fields: [user_id], references: [id])
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  status     Int      @default(1)
+
+  @@id([session_id, user_id])
+  @@map("session_catechists")
+}
+
+model Attendance {
+  id                Int              @id @default(autoincrement())
+  session_id        Int              @map("session_id")
+  user_id           Int              @map("user_id")
+  attendance_status AttendanceStatus @map("attendance_status")
+  comments          String?
+  session           Session          @relation(fields: [session_id], references: [id])
+  user              User             @relation(fields: [user_id], references: [id])
+  created_at        DateTime         @default(now())
+  updated_at        DateTime         @updatedAt
+  status            Int              @default(1)
+
+  @@map("attendances")
+}
+
+model Assessment {
+  id         Int      @id @default(autoincrement())
+  date       DateTime
+  user_id    Int      @map("user_id")
+  grade      Float?
+  comments   String?
+  user       User     @relation(fields: [user_id], references: [id])
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  status     Int      @default(1)
+
+  @@map("assessments")
+}
+
+model HomeworkAssignment {
+  id         Int      @id @default(autoincrement())
+  date       DateTime
+  user_id    Int      @map("user_id")
+  grade      Float?
+  comments   String?
+  user       User     @relation(fields: [user_id], references: [id])
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  status     Int      @default(1)
+
+  @@map("homework_assignments")
+}
