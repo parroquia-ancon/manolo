@@ -1,3 +1,7 @@
-export default function LevelsNewPage() {
-  return <h1 className="text-2xl font-semibold">Settings / Levels / New</h1>;
+"use client";
+
+export default function NewLevelPage() {
+  return (
+    <h1 className="text-2xl font-semibold">New Level</h1>
+  );
 }
