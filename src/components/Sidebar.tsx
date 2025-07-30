@@ -145,6 +145,16 @@ export default function Sidebar(props: SidebarProps) {
 
       {/* Desktop */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-72 lg:flex-col bg-gray-900 p-6">
+        {/* Sidebar component, swap this element with another sidebar if you like */}
+        <div className="flex h-16 shrink-0 items-center">
+          <Image
+            alt="Catequizandos"
+            src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
+            className="h-8 w-auto"
+            width={40}
+            height={40}
+          />
+        </div>
         <nav className="space-y-4">
           {menu.map((item) =>
             item.children ? (
